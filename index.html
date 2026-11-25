@@ -185,6 +185,40 @@ details.recipe summary .t{flex:1}
 .toast.show{opacity:1}
 textarea.copybox{width:100%;min-height:200px;font:13px/1.45 ui-monospace,Menlo,monospace;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---------- Ernährungsprofil ---------- */
+.profbar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:12px}
+.profbar .pt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.profbar .pt b{font-size:.9rem}
+.profbar .chips{margin-top:2px}
+.pm{position:fixed;inset:0;z-index:40;background:rgba(10,16,13,.5);display:flex;align-items:flex-end;justify-content:center}
+.pm[hidden]{display:none}
+.pm-panel{background:var(--bg);color:var(--ink);width:min(560px,100%);max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:20px 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px;box-shadow:0 -8px 30px rgba(0,0,0,.18)}
+@media (min-width:700px){.pm{align-items:center}.pm-panel{border-radius:18px}}
+.pm-panel h2{margin:0;font-family:var(--font-display);font-size:1.3rem}
+.pm-panel p{margin:0}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:12px;font:inherit;color:var(--ink);cursor:pointer;min-height:74px;position:relative}
+.opt b{font-size:.98rem}
+.opt span{font-size:.78rem;color:var(--muted);line-height:1.3}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.opt[aria-pressed="true"]::after{content:"✓";position:absolute;top:8px;right:10px;font-weight:700;color:var(--accent)}
+.alg{display:flex;flex-direction:column;gap:2px}
+.alg label{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:.95rem;cursor:pointer}
+.alg label:last-child{border-bottom:0}
+.alg input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.alg small{display:block;color:var(--muted);font-size:.76rem}
+.pm-actions{display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}
+.seg button{font:600 .9rem var(--font-body);border:0;border-radius:9px;padding:10px 6px;background:none;color:var(--ink);cursor:pointer}
+.seg button[aria-checked="true"]{background:var(--accent);color:var(--accent-ink)}
+.pm-lbl{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:4px}
+.chip.ok{background:var(--accent);color:var(--accent-ink)}
+details.nomatch{border:1px dashed var(--line);border-radius:12px;padding:0 10px;margin:4px 0 6px}
+details.nomatch>summary{cursor:pointer;list-style:none;padding:10px 2px;font-size:.88rem;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+details.nomatch>summary::-webkit-details-marker{display:none}
+details.nomatch[open]>summary{border-bottom:1px dashed var(--line);margin-bottom:8px}
+.nmbody{display:flex;flex-direction:column;gap:8px;padding-bottom:10px;opacity:.85}
 </style>
 </head>
 <body>
@@ -207,6 +241,8 @@ textarea.copybox{width:100%;min-height:200px;font:13px/1.45 ui-monospace,Menlo,m
     <button role="tab" id="t-rezepte" data-view="rezepte">Rezepte</button>
     <button role="tab" id="t-vorrat" data-view="vorrat">Vorrat</button>
   </nav>
+
+  <div class="profbar" id="profbar"></div>
 
   <section id="v-plan" aria-labelledby="t-plan">
     <div class="bar">
@@ -268,6 +304,32 @@ textarea.copybox{width:100%;min-height:200px;font:13px/1.45 ui-monospace,Menlo,m
   </section>
 </div>
 <div class="dish" id="dish" hidden role="dialog" aria-modal="true" aria-labelledby="dish-title"><div class="dish-panel"></div></div>
+
+<div class="pm" id="pm-diet" hidden role="dialog" aria-modal="true" aria-labelledby="pm-diet-t"><div class="pm-panel">
+  <h2 id="pm-diet-t">Worauf achtest du beim Essen?</h2>
+  <p class="muted small">Tipp alles an, was für dich gilt. Passende Rezepte werden dann in jeder Kategorie zuerst vorgeschlagen, der Rest rutscht nach unten.</p>
+  <div class="pm-lbl" id="pm-diet-l">Ernährungsweise</div>
+  <div class="seg" role="radiogroup" aria-labelledby="pm-diet-l">
+    <button type="button" role="radio" data-diet="alles" aria-checked="true">Mit Fleisch</button>
+    <button type="button" role="radio" data-diet="veggie" aria-checked="false">Vegetarisch</button>
+    <button type="button" role="radio" data-diet="vegan" aria-checked="false">Vegan</button>
+  </div>
+  <div class="pm-lbl">Worauf achtest du noch?</div>
+  <div class="opts">
+    <button type="button" class="opt" data-p="hist" aria-pressed="false"><b>Histaminarm</b><span>wenig Histamin, z. B. bei Histaminintoleranz</span></button>
+    <button type="button" class="opt" data-p="gluten" aria-pressed="false"><b>Glutenfrei</b><span>ohne Weizen, Roggen, Gerste und Dinkel</span></button>
+    <button type="button" class="opt" data-p="lactose" aria-pressed="false"><b>Laktosefrei</b><span>ohne Milchzucker oder mit laktosefreien Produkten</span></button>
+    <button type="button" class="opt" data-p="allergien" aria-pressed="false"><b>Allergien</b><span id="pm-alg-sum">Allergene auswählen</span></button>
+  </div>
+  <div class="pm-actions"><button type="button" class="link" id="pm-reset">Alles zurücksetzen</button><button type="button" class="btn primary" id="pm-done">Fertig</button></div>
+</div></div>
+<div class="pm" id="pm-alg" hidden role="dialog" aria-modal="true" aria-labelledby="pm-alg-t"><div class="pm-panel">
+  <h2 id="pm-alg-t">Welche Allergien hast du?</h2>
+  <p class="muted small">Rezepte mit diesen Zutaten werden ausgeblendet und nur noch unten unter „passt nicht“ gezeigt.</p>
+  <div class="alg" id="pm-alg-list"></div>
+  <p class="note warn small">Die Allergene sind aus den Zutaten der Rezepte abgeleitet. Prüf bei einer Allergie trotzdem immer die Zutatenliste der Produkte, die du kaufst, denn Spuren und Rezepturen der Hersteller kann der Planer nicht kennen.</p>
+  <div class="pm-actions"><button type="button" class="link" id="pm-alg-none">Keine Allergien</button><button type="button" class="btn primary" id="pm-alg-ok">Übernehmen</button></div>
+</div></div>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -1265,7 +1327,8 @@ function recFor(d,s){
 }
 function optionsHtml(sel,d,s){
   let h='<option value="">Nichts geplant</option><option value="rest"'+(sel==="rest"?" selected":"")+'>Reste oder auswärts</option><option value="eigen"'+(sel==="eigen"?" selected":"")+'>Selbst eintragen …</option>';
-  const rec=d?recFor(d,s):[];
+  const PA=profActive(), NM=[];
+  const rec=d?recForProfile(d,s,recFor(d,s)):[];
   const opt=(r,canSel)=>'<option value="'+r.id+'"'+(canSel&&sel===r.id?" selected":"")+'>'+esc(r.name)+'</option>';
   if(rec.length){
     const tip=emptyTip(d,s).replace(/^Tipp: /,"");
@@ -1274,8 +1337,10 @@ function optionsHtml(sel,d,s){
   const cheat=d&&isCheatDay(d);
   if(!cheat&&sel&&RMAP[sel]&&RMAP[sel].cheat)h+='<optgroup label="Cheatday">'+opt(RMAP[sel],true)+'</optgroup>';
   if(cheat)h+='<optgroup label="Alle Cheatday-Gerichte">'+RECIPES.filter(r=>r.cheat&&!rec.includes(r.id)).sort((a,b)=>a.name.localeCompare(b.name,"de")).map(r=>opt(r,true)).join("")+'</optgroup>';
-  if(!cheat)h+='<optgroup label="Cheatday-Gerichte">'+RECIPES.filter(r=>r.cheat&&r.id!==sel).sort((a,b)=>a.name.localeCompare(b.name,"de")).map(r=>opt(r,true)).join("")+'</optgroup>';
-  for(const [k,rs] of byKat(RECIPES.filter(r=>!r.warn&&!r.cheat)))h+='<optgroup label="'+esc(k)+'">'+rs.map(r=>opt(r,!rec.includes(r.id))).join("")+'</optgroup>';
+  if(PA)NM.push(...RECIPES.filter(r=>r.cheat&&r.id!==sel&&fit(r).s===2));
+  if(!cheat)h+='<optgroup label="Cheatday-Gerichte">'+RECIPES.filter(r=>r.cheat&&r.id!==sel&&(!PA||fit(r).s<2)).sort((a,b)=>a.name.localeCompare(b.name,"de")).map(r=>opt(r,true)).join("")+'</optgroup>';
+  for(const [k,rs0] of byKat(RECIPES.filter(r=>!r.warn&&!r.cheat))){const rs=PA?rs0.filter(r=>fit(r).s<2).sort((a,b)=>fit(a).s-fit(b).s):rs0;if(PA)NM.push(...rs0.filter(r=>fit(r).s===2));if(rs.length)h+='<optgroup label="'+esc(k)+'">'+rs.map(r=>opt(r,!rec.includes(r.id))).join("")+'</optgroup>'}
+  if(NM.length)h+='<optgroup label="Passt nicht zu deiner Auswahl">'+NM.map(r=>opt(r,!rec.includes(r.id))).join("")+'</optgroup>';
   const bad=cheat?[]:RECIPES.filter(r=>r.warn&&r.groups.length);
   if(bad.length)h+='<optgroup label="Nicht empfohlen">'+bad.map(r=>opt(r,true)).join("")+'</optgroup>';
   return h;
@@ -1287,7 +1352,8 @@ function hintFor(v){
   if(r.warn&&!r.groups.length)return "Cheatday · Rezept auf Instagram ("+r.src+"), steht nicht auf der Einkaufsliste";
   const h=recipeHist(r);
   const ns=nutrShort(r);
-  return "ergibt "+r.portions+(r.portions==="1"?" Portion":" Portionen")+(ns?" · "+ns+" pro Portion":"")+(h.level?" · "+h.label:"");
+  const pf=profActive()?fit(r):null;
+  return "ergibt "+r.portions+(r.portions==="1"?" Portion":" Portionen")+(ns?" · "+ns+" pro Portion":"")+(h.level?" · "+h.label:"")+(pf&&pf.s===2?" · passt nicht: enthält "+pf.why.join(", "):pf&&pf.s===1?" · passt mit "+pf.adapt.join(" und "):"");
 }
 function renderPlan(){
   startEl.value=state.start; daysEl.value=String(state.days);
@@ -1422,20 +1488,28 @@ function renderRecipes(){
   if(rKat!=="Alle"&&!cnt[rKat])rKat="Alle";
   $id("katbar").innerHTML=["Alle",...kats].map(k=>'<button type="button" data-kat="'+esc(k)+'" aria-pressed="'+(k===rKat)+'">'+esc(k)+' <span>'+(k==="Alle"?RECIPES.length:cnt[k])+'</span></button>').join("");
   let h="", lastK="";
-  const sorted=[...byKat(RECIPES.filter(r=>!r.warn)).flatMap(([,a])=>a),...RECIPES.filter(r=>r.warn)];
+  const PA=profActive(); if(PA){cnt["Passt zu dir"]=RECIPES.filter(r=>fit(r).s<2).length;kats.unshift("Passt zu dir");$id("katbar").innerHTML=["Alle",...kats].map(k=>'<button type="button" data-kat="'+esc(k)+'" aria-pressed="'+(k===rKat)+'">'+esc(k)+' <span>'+(k==="Alle"?RECIPES.length:cnt[k])+'</span></button>').join("")}
+  else if(rKat==="Passt zu dir")rKat="Alle";
+  let inNo=false; const nmCnt={};
+  const sorted=[...byKat(RECIPES.filter(r=>!r.warn)).flatMap(([,a])=>PA?[...a].sort((x,y)=>fit(x).s-fit(y).s):a),...RECIPES.filter(r=>r.warn)];
   for(const r of sorted){
     const k=r.warn?"Nicht empfohlen":katOf(r);
-    if(rKat==="Gluten- & laktosefrei"){if(!r.gioia)continue}else if(rKat!=="Alle"&&k!==rKat)continue;
+    const F=PA?fit(r):null;
+    if(rKat==="Passt zu dir"&&F&&F.s===2)continue;
+    if(rKat==="Gluten- & laktosefrei"){if(!r.gioia)continue}else if(rKat!=="Alle"&&rKat!=="Passt zu dir"&&k!==rKat)continue;
     const hay=(r.name+" "+k+" "+(r.warn||"")+" "+r.groups.map(g=>g[1].map(i=>ITEMS[i[0]][0]).join(" ")).join(" ")).toLowerCase();
     if(q&&!hay.includes(q))continue;
-    if(k!==lastK){h+='<h3 class="kathead">'+esc(k)+'</h3>';lastK=k}
+    if(k!==lastK){if(inNo){h+='</div></details>';inNo=false}h+='<h3 class="kathead">'+esc(k)+'</h3>';lastK=k}
+    if(F&&F.s===2&&!inNo){h+='<details class="nomatch"><summary><span>@@NM_'+esc(k)+'@@ passen nicht zu deiner Auswahl</span><span>anzeigen</span></summary><div class="nmbody">';inNo=true}
+    if(F&&F.s===2)nmCnt[k]=(nmCnt[k]||0)+1;
     const hs=recipeHist(r);
     const stub=r.warn&&!r.groups.length;
     h+='<details class="recipe"><summary><span class="rsum">'+dishImg(r,"thumb")+'<span class="t"><b>'+esc(r.name)+'</b>'+(r.portions?'<span class="muted small">'+esc(r.portions)+(r.portions==="1"?" Portion":" Portionen")+(nutrShort(r)?" · "+nutrShort(r)+" pro Portion":"")+'</span>':'')
-      +(stub?'<span class="chips"><span class="chip h2">nicht empfohlen</span></span></span></span><span class="chev" aria-hidden="true">›</span></summary><div class="rbody">':'<span class="chips"><span class="chip'+(hs.level?" h"+hs.level:"")+'">'+hs.label+'</span>'+(isGF(r)?'<span class="chip">glutenfrei</span>':'<span class="chip h2">enthält Gluten</span>')+xChips(r)+(r.warn?'<span class="chip h2">nicht empfohlen</span>':'')+(r.isNew?'<span class="chip">neu, passt zum Nährstoffplan</span>':'')+'</span></span></span><span class="chev" aria-hidden="true">›</span></summary><div class="rbody">');
+      +(stub?'<span class="chips"><span class="chip h2">nicht empfohlen</span></span></span></span><span class="chev" aria-hidden="true">›</span></summary><div class="rbody">':'<span class="chips">'+fitChip(r)+'<span class="chip'+(hs.level?" h"+hs.level:"")+'">'+hs.label+'</span>'+(isGF(r)?'<span class="chip">glutenfrei</span>':'<span class="chip h2">enthält Gluten</span>')+xChips(r)+(r.warn?'<span class="chip h2">nicht empfohlen</span>':'')+'</span></span></span><span class="chev" aria-hidden="true">›</span></summary><div class="rbody">');
     if(r.src)h+='<p class="small muted">Quelle: '+(r.url?'<a href="'+r.url+'" target="_blank" rel="noopener">'+esc(r.src)+' auf Instagram</a>':esc(r.src)+' auf Instagram')+'</p>';
     if(r.warn)h+='<p class="note warn small"><b>Nicht empfohlen:</b> '+esc(r.warn)+'</p>';
     if(stub){h+='</div></details>';continue}
+    h+=allergenLine(r);
     h+='<button class="btn primary" type="button" data-dish="'+r.id+'">Übersicht mit Bild, Einkaufsliste und Teilen</button>';
     const nu=nutrition(r);
     if(nu)h+='<div class="nutri"><div><b>'+nu.kcal+'</b><span>kcal</span></div><div><b>'+nu.p+' g</b><span>Eiweiß</span></div><div><b>'+nu.kh+' g</b><span>Kohlenhydrate</span></div><div><b>'+nu.f+' g</b><span>Fett</span></div></div><p class="small muted">Pro Portion'+(nu.n!==1?' (bei '+String(nu.n).replace(".",",")+' Portionen)':'')+(nu.given?(r.est?', geschätzt.':', laut Creator oder geschätzt.'):', aus den Zutaten berechnet. Gewürze und Zutaten „nach Geschmack“ sind nicht eingerechnet.')+'</p>';
@@ -1458,6 +1532,8 @@ function renderRecipes(){
     if(r.tip)h+='<p class="note">'+esc(r.tip)+'</p>';
     h+='</div></details>';
   }
+  if(inNo){h+='</div></details>';inNo=false}
+  h=h.replace(/@@NM_(.+?)@@/g,(m,k)=>{const n=nmCnt[k.replace(/&amp;/g,'&')]||0;return n+(n===1?' Rezept':' Rezepte')}).replace(/(\d+) Rezept passen/g,'$1 Rezept passt');
   $id("recipes").innerHTML=h||'<div class="empty">Kein Rezept gefunden.</div>';
 }
 let rKat="Alle";
@@ -1824,6 +1900,134 @@ function route(){const h=location.hash.slice(1);if(h.startsWith("bild-")&&RMAP[h
 window.addEventListener("hashchange",route);
 
 let tt; function toast(m){const t=$id("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),2200)}
+
+
+/* ---------- Ernährungsprofil: Auswahl und Passung der Rezepte ---------- */
+const ALLERGENS=[
+  ["gluten","Gluten","Weizen, Roggen, Gerste, Dinkel",null],
+  ["krebstiere","Krebstiere","Garnelen, Shrimps, Krabben",/garnele|shrimp|krabbe|scampi|gamba/],
+  ["ei","Eier","auch in Mayo, Spätzle, Maultaschen",/(^|[^a-zäöüß])eier|eigelb|eiweiß|mayonnaise|miracel|knoblauchsoße|spätzle|knöpfle|maultasche|tortellini|mie-nudel|brioche|schupfnudel/],
+  ["fisch","Fisch","Lachs, Seelachs, Worcestershire",/lachs|fisch|thunfisch|sardell|anchovi|worcestershire/],
+  ["erdnuss","Erdnüsse","",/erdnuss/],
+  ["soja","Soja","Sojasoße, Tofu, Edamame",/soja(?!sprossen)|tofu|edamame|tamari|teriyaki|char-siu|korean-bbq|miso|gochujang|veggie-hack/],
+  ["milch","Milch","Milcheiweiß, auch in laktosefreien Produkten",null],
+  ["nuss","Schalenfrüchte","Walnüsse, Haselnüsse, Mandeln, Cashews",/walnu|haselnu|mandel|cashew|pistazie|pekan|macadamia|gemischte nüsse|nuss-nougat|bueno|pesto(?! ohne)/],
+  ["sellerie","Sellerie","auch in Brühe und Fond",/sellerie|brühe|fond(?!ue)|suppengrün/],
+  ["senf","Senf","auch in Mayo und Dressings",/senf|mayonnaise|miracel|remoulade/],
+  ["sesam","Sesam","Sesamöl, Tahin",/sesam|tahin/],
+  ["sulfit","Sulfite","Wein, Essig, Trockenobst",/(?<!stein)wein(?!stein)|balsamico|essig|getrocknete|gewürzgurke|kapern|rosinen|granatapfelsirup/],
+  ["lupine","Lupinen","",/lupine/],
+  ["weichtiere","Weichtiere","Muscheln, Tintenfisch",/muschel|tintenfisch|calamar|oktopus|auster/]
+];
+const ALG_NAME=Object.fromEntries(ALLERGENS.map(a=>[a[0],a[1]]));
+const DAIRY=/milch|sahne|butter|käse|quark|joghurt|skyr|kefir|feta|mozzarella|parmesan|ricotta|burrata|halloumi|cheddar|gouda|emmentaler|brie|camembert|provolone|raclette|leerdammer|monterey|géramont|kaşar|harzer|schmand|crème fra|creme fra|sauerrahm|cremefine|schokolade|schokodrops|nuss-nougat|bueno|croissant|brioche|pesto|ghee|margarine/;
+const PLANT=/kokos|mandelmilch|hafer|erdnuss|cashew|vegan|milchreis|ohne käse|zartbitter|kakao/;
+const ingNames=r=>r.groups.flatMap(g=>g[1].map(i=>((ITEMS[i[0]]?ITEMS[i[0]][0]:i[0])+" "+(typeof i[2]==="string"?i[2]:"")).toLowerCase()));
+function hasLactose(r){return ingNames(r).some(n=>DAIRY.test(n)&&!PLANT.test(n)&&!/laktosefrei|ghee/.test(n))}
+function hasMilk(r){return ingNames(r).some(n=>DAIRY.test(n)&&!PLANT.test(n))}
+const MEAT=/hähnchen|huhn|hühner|geflügel|pute|rind|schwein|kalb|lamm|hackfleisch|(?<!veggie-)hack(?!.*veggie)|speck|bacon|schinken|salami|wurst|sucuk|gyros(?!gewürz)|kebab|mortadella|fleisch|steak|filet(?!.*lachs)|chorizo|maultasche|patties|bratwurst|leberkäse/;
+const FISH=/lachs|fisch|thunfisch|sardell|anchovi|worcestershire|garnele|shrimp|krabbe|scampi|gamba|muschel|tintenfisch|calamar/;
+function hasMeat(r){return ingNames(r).some(n=>MEAT.test(n)&&!/veggie|vegan|gewürz|fleischtomate/.test(n))}
+function hasFish(r){return ingNames(r).some(n=>FISH.test(n))}
+function hasEgg(r){return ingNames(r).some(n=>ALLERGENS[2][3].test(n))}
+function hasHoney(r){return ingNames(r).some(n=>/honig/.test(n))}
+const algCache=new Map();
+function recipeAllergens(r){
+  if(algCache.has(r.id))return algCache.get(r.id);
+  const names=ingNames(r), out=new Set();
+  for(const [id,,,re] of ALLERGENS){
+    if(id==="gluten"){if(!isGF(r))out.add(id);continue}
+    if(id==="milch"){if(hasMilk(r))out.add(id);continue}
+    if(re&&names.some(n=>re.test(n)))out.add(id);
+  }
+  algCache.set(r.id,out);return out;
+}
+const PROF_DEFAULT={diet:"alles",hist:false,gluten:false,lactose:false,allergens:[]};
+state.profile=Object.assign({},PROF_DEFAULT,state.profile||{});
+const profActive=()=>{const p=state.profile;return !!((p.diet&&p.diet!=="alles")||p.hist||p.gluten||p.lactose||(p.allergens&&p.allergens.length))};
+let fitCache=new Map();
+function fit(r){
+  if(fitCache.has(r.id))return fitCache.get(r.id);
+  const p=state.profile, why=[], adapt=[]; let s=0;
+  if(r.groups.length){
+    if(p.diet==="veggie"||p.diet==="vegan"){if(hasMeat(r)){s=2;why.push("Fleisch")}if(hasFish(r)){s=2;why.push("Fisch")}if(ingNames(r).some(n=>/kollagen|gelatine/.test(n))||/kollagen|gelatine/i.test(r.name+" "+(r.steps||[]).join(" "))){s=2;why.push("Kollagen")}if(ingNames(r).some(n=>/parmesan|pecorino|grana padano/.test(n))){s=2;why.push("Parmesan (tierisches Lab)")}}
+    if(p.diet==="vegan"){if(hasMilk(r)){s=2;why.push("Milchprodukte")}if(hasEgg(r)){s=2;why.push("Eier")}if(hasHoney(r)){s=2;why.push("Honig")}}
+    if(p.hist){const l=recipeHist(r).level;if(l===2){s=2;why.push("viel Histamin")}else if(l===1){s=Math.max(s,1);adapt.push("etwas Histamin")}}
+    if(p.gluten&&!isGF(r)){if(r.gnote||r.gf){s=Math.max(s,1);adapt.push("glutenfreie Alternativen")}else{s=2;why.push("Gluten")}}
+    if(p.lactose&&hasLactose(r)){if(r.lnote||r.gioia){s=Math.max(s,1);adapt.push("laktosefreie Produkte")}else{s=2;why.push("Laktose")}}
+    const al=recipeAllergens(r);
+    for(const a of p.allergens||[])if(al.has(a)){s=2;why.push(ALG_NAME[a])}
+  }else{s=2;why.push("kein Rezept")}
+  const f={s,why:[...new Set(why)],adapt};fitCache.set(r.id,f);return f;
+}
+function fitChip(r){
+  if(!profActive())return "";
+  const f=fit(r);
+  if(f.s===0)return '<span class="chip ok">passt zu dir</span>';
+  if(f.s===1)return '<span class="chip h1">passt mit '+esc(f.adapt.join(" und "))+'</span>';
+  return '<span class="chip h2">enthält '+esc(f.why.join(", "))+'</span>';
+}
+function allergenLine(r){
+  const al=[...recipeAllergens(r)].map(a=>ALG_NAME[a]);
+  return '<p class="small muted"><b>Allergene laut Zutaten:</b> '+(al.length?esc(al.join(", ")):"keine der 14 Hauptallergene")+'</p>';
+}
+// Empfehlungen im Plan an die Auswahl anpassen
+const PLAN_KATS={frueh:["Frühstück"],mittag:["Bowl","Salat","Curry & Pfanne","Pasta","Suppe","Wrap & Snacks","Ofen & Auflauf","Kartoffeln & Klassiker"],abend:["Ofen & Auflauf","Curry & Pfanne","Pasta","Bowl","Kartoffeln & Klassiker","Suppe","Salat"]};
+function recForProfile(d,s,rec){
+  if(!profActive())return rec;
+  let out=rec.filter(id=>fit(RMAP[id]).s<2).sort((a,b)=>fit(RMAP[a]).s-fit(RMAP[b]).s);
+  if(out.length<4){
+    const kats=PLAN_KATS[s]||PLAN_KATS.mittag;
+    const pool=RECIPES.filter(r=>!r.cheat&&!r.warn&&kats.includes(r.kat)&&fit(r).s===0&&!out.includes(r.id));
+    if(pool.length){const off=d?[...d].reduce((a,c)=>a+c.charCodeAt(0),0)+(s.length*7):0;
+      for(let i=0;i<pool.length&&out.length<6;i++)out.push(pool[(off+i*5)%pool.length].id);}
+    out=[...new Set(out)];
+  }
+  return out;
+}
+function profSummary(){
+  const p=state.profile,a=[];
+  if(p.diet==="veggie")a.push("Vegetarisch");if(p.diet==="vegan")a.push("Vegan");
+  if(p.hist)a.push("Histaminarm");if(p.gluten)a.push("Glutenfrei");if(p.lactose)a.push("Laktosefrei");
+  if(p.allergens&&p.allergens.length)a.push("Allergien: "+p.allergens.map(x=>ALG_NAME[x]).join(", "));
+  return a;
+}
+function renderProfBar(){
+  const el=$id("profbar"),a=profSummary();
+  if(!a.length){el.innerHTML='<div class="pt"><b>Worauf achtest du beim Essen?</b><span class="muted small">Fleisch, vegetarisch oder vegan, dazu Histamin, Gluten, Laktose oder Allergien auswählen, dann siehst du passende Rezepte zuerst.</span></div><button type="button" class="btn primary" id="prof-open">Auswählen</button>';return}
+  const n=RECIPES.filter(r=>fit(r).s<2).length;
+  el.innerHTML='<div class="pt"><b>Deine Auswahl</b><span class="chips">'+a.map(x=>'<span class="chip">'+esc(x)+'</span>').join("")+'</span><span class="muted small">'+n+' von '+RECIPES.length+' Rezepten passen.</span></div><button type="button" class="btn" id="prof-open">Ändern</button>';
+}
+function profChanged(){fitCache=new Map();state.profileAsked=true;save();renderProfBar();rerender()}
+function syncDietModal(){
+  const p=state.profile;
+  document.querySelectorAll("#pm-diet .opt").forEach(b=>{const k=b.dataset.p;b.setAttribute("aria-pressed",String(k==="allergien"?!!(p.allergens&&p.allergens.length):!!p[k]))});
+  document.querySelectorAll("#pm-diet [data-diet]").forEach(b=>b.setAttribute("aria-checked",String((p.diet||"alles")===b.dataset.diet)));
+  $id("pm-alg-sum").textContent=p.allergens&&p.allergens.length?p.allergens.map(x=>ALG_NAME[x]).join(", "):"Allergene auswählen";
+}
+function openPm(id){const m=$id(id);m.hidden=false;document.body.style.overflow="hidden";const f=m.querySelector("button");if(f)f.focus()}
+function closePm(id){$id(id).hidden=true;if($id("pm-diet").hidden&&$id("pm-alg").hidden&&$id("dish").hidden)document.body.style.overflow=""}
+function openDiet(){syncDietModal();openPm("pm-diet")}
+function openAlg(){
+  const sel=new Set(state.profile.allergens||[]);
+  $id("pm-alg-list").innerHTML=ALLERGENS.map(([id,n,d])=>'<label><input type="checkbox" value="'+id+'"'+(sel.has(id)?" checked":"")+'><span>'+esc(n)+(d?'<small>'+esc(d)+'</small>':'')+'</span></label>').join("");
+  openPm("pm-alg");
+}
+document.addEventListener("click",e=>{
+  if(e.target.closest("#prof-open")){openDiet();return}
+  const dg=e.target.closest("#pm-diet [data-diet]");
+  if(dg){state.profile.diet=dg.dataset.diet;syncDietModal();profChanged();return}
+  const o=e.target.closest("#pm-diet .opt");
+  if(o){const k=o.dataset.p;if(k==="allergien"){openAlg();return}state.profile[k]=!state.profile[k];syncDietModal();profChanged();return}
+  if(e.target.id==="pm-done"||e.target.id==="pm-diet"){state.profileAsked=true;save();closePm("pm-diet");return}
+  if(e.target.id==="pm-reset"){state.profile=Object.assign({},PROF_DEFAULT,{allergens:[]});syncDietModal();profChanged();return}
+  if(e.target.id==="pm-alg-ok"){state.profile.allergens=[...document.querySelectorAll("#pm-alg-list input:checked")].map(i=>i.value);closePm("pm-alg");syncDietModal();profChanged();return}
+  if(e.target.id==="pm-alg-none"){state.profile.allergens=[];closePm("pm-alg");syncDietModal();profChanged();return}
+  if(e.target.id==="pm-alg"){closePm("pm-alg");return}
+});
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$id("pm-alg").hidden){closePm("pm-alg");return}if(!$id("pm-diet").hidden){state.profileAsked=true;save();closePm("pm-diet")}});
+renderProfBar();
+if(!state.profileAsked)setTimeout(openDiet,400);
 
 renderStats(); route();
 </script>
